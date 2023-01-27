@@ -28,6 +28,7 @@
     "build:extensions:kind": "cd ./extensions/kind && npm run build",
     "build:extensions:lima": "cd ./extensions/lima && npm run build",
     "build:extensions:podman": "cd ./extensions/podman && npm run build",
+    "build:extensions:sandbox": "cd ./extensions/sandbox && npm run build",
     "build:extension-api": "cd ./packages/extension-api && vite build",
     "build:preload": "cd ./packages/preload && vite build",
     "build:preload-docker-extension": "cd ./packages/preload-docker-extension && vite build",
