@@ -19,5 +19,9 @@
 import * as extensionApi from '@tmpwip/extension-api';
 
 export async function activate(extensionContext: extensionApi.ExtensionContext): Promise<void> {
-    console.log('starting extension kube-context');
+    console.log('starting extension sandbox');
+}
+
+export function deactivate(): void {
+    console.log('stopping sandbox extension');
 }
