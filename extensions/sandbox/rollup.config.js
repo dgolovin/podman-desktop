@@ -13,6 +13,7 @@ export default {
   },
   external: [
     '@tmpwip/extension-api',
+    'make-fetch-happen',
     'node:stream',
     'node:http',
     'node:url',
