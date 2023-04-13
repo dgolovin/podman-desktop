@@ -35,6 +35,7 @@ import PodCreateFromContainers from './lib/pod/PodCreateFromContainers.svelte';
 import DeployPodToKube from './lib/pod/DeployPodToKube.svelte';
 import RunImage from './lib/image/RunImage.svelte';
 import SendFeedback from './lib/feedback/SendFeedback.svelte';
+import AuthenticaionDialog from './lib/authentication/AuthenticaionDialog.svelte';
 import ToastHandler from './lib/toast/ToastHandler.svelte';
 import QuickPickInput from './lib/dialogs/QuickPickInput.svelte';
 import TaskManager from './lib/task-manager/TaskManager.svelte';
@@ -94,6 +95,7 @@ window.events?.receive('display-help', () => {
       <div class="z-0 w-full h-full bg-zinc-800 flex flex-col overflow-y-scroll">
         <TaskManager />
         <SendFeedback />
+        <AuthenticaionDialog />
         <ToastHandler />
         <QuickPickInput />
         <Route path="/" breadcrumb="Dashboard Page">

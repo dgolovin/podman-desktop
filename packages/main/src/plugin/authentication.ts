@@ -25,6 +25,7 @@ import type {
   AuthenticationSessionAccountInformation,
   AuthenticationProviderOptions,
   Disposable,
+  AuthenticationDialog
 } from '@podman-desktop/api';
 // import { window } from '@podman-desktop/api';
 import { Emitter } from './events/emitter';
@@ -60,9 +61,41 @@ export interface AllowedExtension {
 }
 
 export class AuthenticationImpl {
+
+  private _loginDialogQueue: Promise<void> = Promise.resolve();
   private _authenticationProviders: Map<string, ProviderWithMetadata> = new Map<string, ProviderWithMetadata>();
+  private _loginDialogRequests: Map<string, AuthenticationDialog> = new Map<string, AuthenticationDialog>();
 
   constructor(private apiSender: ApiSenderType, private dialogs: Dialogs) {}
+
+  public loginDialogClosedByUser(providerId: string) {
+    const callback =  this._loginDialogRequests.get(providerId);
+    callback?.dispose();
+  }
+
+  private sccheduleLoginDialog(promise: Promise<void>) {
+   this._loginDialogQueue = this._loginDialogQueue.then(() => promise);
+  }
+
+  private createCallback(providerId: string) {
+    const _onDidClose = new Emitter<void>();
+    return (url: string): Promise<AuthenticationDialog> => new Promise((resolveCallback) => {
+      const loginRequest = {
+        dispose: () => {
+          this._loginDialogRequests.delete(providerId);
+          this.apiSender.send('close-authentication-dialog');
+          _onDidClose.fire();
+        },
+        onDidClose: _onDidClose.event 
+      };
+      this.sccheduleLoginDialog(new Promise<void>((resolved, rej) => {
+        this.apiSender.send('display-authentication-dialog', { url, providerId });
+        resolveCallback(loginRequest);
+        loginRequest.onDidClose(resolved);
+      }));
+      this._loginDialogRequests.set(providerId, loginRequest);
+    });
+  }
 
   public async getAuthenticationProvidersInfo(): Promise<AuthenticationProviderInfo[]> {
     const values = Array.from(this._authenticationProviders.values());
@@ -80,7 +113,7 @@ export class AuthenticationImpl {
   }
 
   public async signOut(providerId: string, sessionId: string) {
-    this.removeSession(providerId, sessionId);
+    return this.removeSession(providerId, sessionId);
   }
 
   registerAuthenticationProvider(
@@ -144,6 +177,8 @@ export class AuthenticationImpl {
     return true; // To be implemented later
   }
 
+  private _createSessionRequests: Promise<AuthenticationSession | void> = Promise.resolve();
+
   async getSession(
     requestingExtension: ExtensionInfo,
     providerId: string,
@@ -181,7 +216,7 @@ export class AuthenticationImpl {
       if (sessions.length > 0 && this.isAccessAllowed(providerId, sessions[0].account.label, requestingExtension.id)) {
         return sessions[0];
       }
-      return provider.createSession(scopes);
+      return provider.createSession(scopes, this.createCallback(providerId));
     }
   }
 

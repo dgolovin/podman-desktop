@@ -32,3 +32,4 @@ export const authenticationProviders: Writable<readonly AuthenticationProviderIn
 // need to refresh when new registry are updated/deleted
 window.events?.receive('authentication-provider-update', fetchAuthenicationProvidersInfo);
 window.addEventListener('system-ready', fetchAuthenicationProvidersInfo);
+

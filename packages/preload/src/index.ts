@@ -791,6 +791,13 @@ function initExposure(): void {
   );
 
   contextBridge.exposeInMainWorld(
+    'authenticationProviderLoginDialogClosedByUser',
+    async (providerId: string): Promise<void> => {
+      return ipcInvoke('authentication-provider-registry:loginDialogClosedByUser', providerId);
+    },
+  );
+
+  contextBridge.exposeInMainWorld(
     'getConfigurationProperties',
     async (): Promise<Record<string, IConfigurationPropertyRecordedSchema>> => {
       return ipcInvoke('configuration-registry:getConfigurationProperties');

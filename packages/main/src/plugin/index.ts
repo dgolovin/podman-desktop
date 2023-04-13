@@ -1094,6 +1094,10 @@ export class PluginSystem {
       },
     );
 
+    this.ipcHandle('authentication-provider-registry:loginDialogClosedByUser', async (_listener, providerId: string): Promise<void> => {
+      return authentication.loginDialogClosedByUser(providerId);
+    });
+
     this.ipcHandle(
       'configuration-registry:getConfigurationProperties',
       async (): Promise<Record<string, IConfigurationPropertyRecordedSchema>> => {

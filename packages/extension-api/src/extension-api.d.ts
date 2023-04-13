@@ -1549,6 +1549,14 @@ declare module '@podman-desktop/api' {
   }
 
   /**
+   * A dialog that can be used to notify autentication provider about 
+   * the closure of the authentication request and to allow the to cancel it.
+   */
+  export interface AuthenticationDialog extends Disposable {
+    onDidClose: Event<void>;
+  }
+
+  /**
    * A provider for performing authentication to a service.
    */
   export interface AuthenticationProvider {
@@ -1577,9 +1585,10 @@ declare module '@podman-desktop/api' {
      * then this should never be called if there is already an existing session matching these
      * scopes.
      * @param scopes A list of scopes, permissions, that the new session should be created with.
+     * @param requestAuthenticationDialogCallback A callback that will be called when the provider needs to show a dialog to the user.
      * @returns A promise that resolves to an authentication session.
      */
-    createSession(scopes: string[]): Promise<AuthenticationSession>;
+    createSession(scopes: string[], requestAuthenticationDialogCallback?: (url: string) => Promise<AuthenticationDialog>): Promise<AuthenticationSession>;
 
     /**
      * Removes the session corresponding to session id.

@@ -49,6 +49,9 @@ const ALLOWED_ORIGINS_AND_PERMISSIONS = new Map<
     : [],
 );
 
+// Allow to open well known origins like SSO endpoints in webview based dialog
+ALLOWED_ORIGINS_AND_PERMISSIONS.set(new URL('https://sso.redhat.com/').origin, new Set(['unknown']));
+
 /**
  * List of origins that you allow open IN BROWSER.
  * Navigation to origins below is possible only if the link opens in a new window

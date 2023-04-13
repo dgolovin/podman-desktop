@@ -2,6 +2,7 @@
 import { faFrown, faGrinStars, faMeh, faSmile } from '@fortawesome/free-solid-svg-icons';
 import Fa from 'svelte-fa/src/fa.svelte';
 import Modal from '../dialogs/Modal.svelte';
+import Frame from '../dialogs/Frame.svelte';
 import type { FeedbackProperties } from '../../../../preload/src/index';
 import ErrorMessage from '../ui/ErrorMessage.svelte';
 let displayModal = false;
@@ -50,16 +51,7 @@ async function sendFeedback(): Promise<void> {
 
 {#if displayModal}
   <Modal on:close="{() => hideModal()}">
-    <div
-      class="inline-block w-full overflow-hidden text-left transition-all transform bg-zinc-800 z-50 rounded-xl shadow-xl shadow-neutral-900">
-      <div class="flex items-center justify-between bg-black px-5 py-4 border-b-2 border-violet-700">
-        <h1 class="text-xl font-bold">Share your feedback</h1>
-
-        <button class="hover:text-gray-200 px-2 py-1" on:click="{() => hideModal()}">
-          <i class="fas fa-times" aria-hidden="true"></i>
-        </button>
-      </div>
-
+    <Frame title={'Share your feedback'} onClose={hideModal}>
       <div class="overflow-y-auto p-4">
         <label for="smiley" class="block mb-2 text-sm font-medium text-gray-300 dark:text-gray-300"
           >How was your experience with Podman Desktop ?</label>
@@ -126,6 +118,6 @@ async function sendFeedback(): Promise<void> {
           </div>
         </div>
       </div>
-    </div>
+    </Frame>
   </Modal>
 {/if}
