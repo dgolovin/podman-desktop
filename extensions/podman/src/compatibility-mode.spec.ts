@@ -240,12 +240,12 @@ test('darwin: test promptRestart IS NOT ran when findRunningMachine returns unde
   vi.mock('./extension', () => {
     return {
       findRunningMachine: () => {
-        return Promise.resolve(undefined);
+        return Promise.resolve();
       },
     };
   });
 
-  const spyPromptRestart = vi.spyOn(socketCompatClass, 'promptRestart');
+  const spyPromptRestart = vi.spyOn(extensionApi.window, 'showInformationMessage');
 
   // Enable shouldn't call promptRestart
   await socketCompatClass.enable();
