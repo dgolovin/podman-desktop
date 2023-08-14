@@ -138,7 +138,7 @@ export class DarwinSocketCompatibility extends SocketCompatibility {
 
     // Prompt the user to restart the podman machine if it's running
     const isRunning = await findRunningMachine();
-    if (isRunning !== '') {
+    if (isRunning) {
       await this.promptRestart(isRunning);
     }
 
@@ -150,7 +150,7 @@ export class DarwinSocketCompatibility extends SocketCompatibility {
 
     // Prompt the user to restart the podman machine if it's running
     const isRunning = await findRunningMachine();
-    if (isRunning !== '') {
+    if (isRunning) {
       await this.promptRestart(isRunning);
     }
 

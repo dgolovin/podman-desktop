@@ -23,6 +23,7 @@ import { spawn } from 'node:child_process';
 import { getSocketCompatibility, DarwinSocketCompatibility, LinuxSocketCompatibility } from './compatibility-mode';
 import * as extensionApi from '@podman-desktop/api';
 import type { Readable } from 'node:stream';
+import * as extension from './extension';
 
 vi.mock('@podman-desktop/api', () => {
   return {
@@ -34,7 +35,6 @@ vi.mock('@podman-desktop/api', () => {
 });
 
 // macOS tests
-
 vi.mock('runSudoMacHelperCommand', () => {
   return vi.fn();
 });
@@ -42,16 +42,6 @@ vi.mock('runSudoMacHelperCommand', () => {
 afterEach(() => {
   vi.resetAllMocks();
   vi.restoreAllMocks();
-});
-
-// mock isDefaultMachineRunning from extension to always return true
-// this is to prevent execPromise to be ran within it and cause errors
-vi.mock('./extension', () => {
-  return {
-    findRunningMachine: () => {
-      return 'default';
-    },
-  };
 });
 
 test('darwin: compatibility mode binary not found failure', async () => {
@@ -106,6 +96,11 @@ test('darwin: DarwinSocketCompatibility class, test promptRestart ran within run
   // Mock execPromise was ran successfully
   vi.mock('execPromise', () => {
     return Promise.resolve();
+  });
+
+  const spyFindRunningMachine = vi.spyOn(extension, 'findRunningMachine');
+  spyFindRunningMachine.mockImplementation(() => {
+    return Promise.resolve('default');
   });
 
   // Mock that enable ran successfully
@@ -214,4 +209,49 @@ test('windows: compatibility mode fail', async () => {
 
   // Expect getSocketCompatibility to return error since Linux is not supported yet
   expect(() => getSocketCompatibility()).toThrowError();
+});
+
+test('darwin: test promptRestart IS NOT ran when findRunningMachine returns undefined for enable AND disable', async () => {
+  // Mock platform to be darwin
+  Object.defineProperty(process, 'platform', {
+    value: 'darwin',
+  });
+
+  const socketCompatClass = new DarwinSocketCompatibility();
+
+  // Mock execPromise was ran successfully
+  vi.mock('execPromise', () => {
+    return Promise.resolve();
+  });
+
+  // Mock that enable ran successfully
+  const spyEnable = vi.spyOn(socketCompatClass, 'runCommand');
+  spyEnable.mockImplementation(() => {
+    return Promise.resolve();
+  });
+
+  // Mock that disable ran successfully
+  const spyDisable = vi.spyOn(socketCompatClass, 'runCommand');
+  spyDisable.mockImplementation(() => {
+    return Promise.resolve();
+  });
+
+  // Mock that findRunningMachine returns undefined
+  vi.mock('./extension', () => {
+    return {
+      findRunningMachine: () => {
+        return Promise.resolve(undefined);
+      },
+    };
+  });
+
+  const spyPromptRestart = vi.spyOn(socketCompatClass, 'promptRestart');
+
+  // Enable shouldn't call promptRestart
+  await socketCompatClass.enable();
+  expect(spyPromptRestart).not.toHaveBeenCalled();
+
+  // Disable shouldn't call promptRestart
+  await socketCompatClass.disable();
+  expect(spyPromptRestart).not.toHaveBeenCalled();
 });
