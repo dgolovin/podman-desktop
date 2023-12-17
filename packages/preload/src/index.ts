@@ -21,7 +21,7 @@
  */
 
 import type * as containerDesktopAPI from '@podman-desktop/api';
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, webFrame } from 'electron';
 import EventEmitter from 'events';
 import type {
   ContainerCreateOptions,
@@ -1816,6 +1816,16 @@ function initExposure(): void {
 
   contextBridge.exposeInMainWorld('getImageCheckerProviders', async (): Promise<ImageCheckerInfo[]> => {
     return ipcInvoke('image-checker:getProviders');
+  });
+
+  contextBridge.exposeInMainWorld('setVisualZoomLevelLimits', async (): Promise<void> => {
+    window.addEventListener('resize', () => {
+      webFrame.setZoomFactor = () => {
+        throw new Error('zoom-level');
+      };
+      console.log(webFrame.getZoomLevel());
+    });
+    console.log('test');
   });
 
   contextBridge.exposeInMainWorld(

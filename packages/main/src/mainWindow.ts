@@ -20,8 +20,7 @@ import type { BrowserWindowConstructorOptions, FileFilter } from 'electron';
 import { autoUpdater, Menu, BrowserWindow, ipcMain, app, dialog, screen, nativeTheme } from 'electron';
 import contextMenu from 'electron-context-menu';
 import { aboutMenuItem } from 'electron-util';
-import { join } from 'path';
-import { URL } from 'url';
+import path, { join } from 'path';
 import type { ConfigurationRegistry } from './plugin/configuration-registry.js';
 import { isLinux, isMac, stoppedExtensions } from './util.js';
 
@@ -241,12 +240,8 @@ async function createWindow(): Promise<BrowserWindow> {
    * Vite dev server for development.
    * `file://../renderer/index.html` for production and test
    */
-  const pageUrl =
-    import.meta.env.DEV && import.meta.env.VITE_DEV_SERVER_URL !== undefined
-      ? import.meta.env.VITE_DEV_SERVER_URL
-      : new URL('../renderer/dist/index.html', 'file://' + __dirname).toString();
 
-  await browserWindow.loadURL(pageUrl);
+  await browserWindow.loadFile(path.resolve('./packages/renderer/dist/index.html'));
 
   return browserWindow;
 }
@@ -257,6 +252,7 @@ export async function createNewWindow(): Promise<BrowserWindow> {
 
   if (window === undefined) {
     window = await createWindow();
+    console.log('window created');
   }
   return window;
 }

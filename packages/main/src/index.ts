@@ -164,12 +164,13 @@ app.whenReady().then(
 
     // Platforms: Linux, macOS, Windows
     // Create the main window
+    console.log('before window created');
     createNewWindow()
       .then(w => mainWindowDeferred.resolve(w))
       .catch((error: unknown) => {
         console.error('Error creating window', error);
       });
-
+    console.log('after window created');
     // Platforms: macOS
     // Required for macOS to start the app correctly (this is will be shown in the dock)
     // We use 'activate' within whenReady in order to gracefully start on macOS, see this link:
@@ -186,13 +187,13 @@ app.whenReady().then(
     // TODO: Needs to be there until Happy Eyeballs(https://en.wikipedia.org/wiki/Happy_Eyeballs) is implemented
     // which is the case in Node.js 20+ https://github.com/nodejs/node/issues/41625
     dns.setDefaultResultOrder('ipv4first');
-
+    console.log('default image loading');
     // Setup the default tray icon + menu items
     const animatedTray = new AnimatedTray();
     tray = new Tray(animatedTray.getDefaultImage());
     animatedTray.setTray(tray);
     const trayMenu = new TrayMenu(tray, animatedTray);
-
+    console.log('plugin system loading');
     // Start extensions
     const pluginSystem = new PluginSystem(trayMenu);
     extensionLoader = await pluginSystem.initExtensions();
@@ -218,3 +219,5 @@ app.whenReady().then(
   },
   (e: unknown) => console.error('Failed to start app:', e),
 );
+
+console.log('test1');
