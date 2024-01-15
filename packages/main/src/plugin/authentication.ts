@@ -29,6 +29,7 @@ import type {
 } from '@podman-desktop/api';
 import { Emitter } from './events/emitter.js';
 import type { ApiSenderType } from './api.js';
+import { clipboard } from 'electron';
 
 /**
  * Structure to save authentication provider information
@@ -104,6 +105,19 @@ export class AuthenticationImpl {
 
   public async signOut(providerId: string, sessionId: string): Promise<void> {
     await this.removeSession(providerId, sessionId);
+  }
+
+  public async copyIdTokenToClipboard(providerId: string): Promise<void> {
+    const provider = this._authenticationProviders.get(providerId)?.provider;
+    const sessions = (await provider?.getSessions()) as AuthenticationSession[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    clipboard.writeText((sessions[0] as any).idToken);
+  }
+
+  public async copyAccessTokenToClipboard(providerId: string): Promise<void> {
+    const provider = this._authenticationProviders.get(providerId)?.provider;
+    const sessions = (await provider?.getSessions()) as AuthenticationSession[];
+    clipboard.writeText(sessions[0].accessToken);
   }
 
   registerAuthenticationProvider(

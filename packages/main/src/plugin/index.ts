@@ -1555,6 +1555,20 @@ export class PluginSystem {
     );
 
     this.ipcHandle(
+      'authentication-provider-registry:copyIdTokenToClipboard',
+      async (_listener, providerId: string, sessionId): Promise<void> => {
+        return authentication.copyIdTokenToClipboard(providerId, sessionId);
+      },
+    );
+
+    this.ipcHandle(
+      'authentication-provider-registry:copyAccessTokenToClipboard',
+      async (_listener, providerId: string, sessionId): Promise<void> => {
+        return authentication.copyAccessTokenToClipboard(providerId, sessionId);
+      },
+    );
+
+    this.ipcHandle(
       'authentication-provider-registry:requestAuthenticationProviderSignIn',
       async (_listener, requestId: string): Promise<void> => {
         return authentication.executeSessionRequest(requestId);

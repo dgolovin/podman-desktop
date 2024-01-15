@@ -1,6 +1,6 @@
 <script lang="ts">
 import { authenticationProviders } from '../../stores/authenticationProviders';
-import { faCircle, faRightFromBracket, faArrowRightToBracket } from '@fortawesome/free-solid-svg-icons';
+import { faCircle, faRightFromBracket, faCopy, faArrowRightToBracket } from '@fortawesome/free-solid-svg-icons';
 import SettingsPage from './SettingsPage.svelte';
 import Fa from 'svelte-fa';
 import KeyIcon from '../images/KeyIcon.svelte';
@@ -82,7 +82,21 @@ import DropdownMenuItem from '../ui/DropDownMenuItem.svelte';
             <div class="flex flex-row">
               <div class="flex items-center w-full">
                 <span>
-                  {provider.accounts.length > 0 ? provider.accounts[0].label : ''}
+                  {#if provider.accounts.length > 0}
+                    {provider.accounts[0].label}
+                    <button
+                      aria-label="Sign out of {provider.accounts[0].label}"
+                      class="pl-2 hover:cursor-pointer hover:text-white text-white"
+                      on:click="{() => window.copyIdTokenToClipboard(provider.id, provider.accounts[0].id)}">
+                      <Fa class="h-3 w-3 text-md mr-2" icon="{faCopy}" />
+                    </button>
+                    <button
+                      aria-label="Sign out of {provider.accounts[0].label}"
+                      class="pl-2 hover:cursor-pointer hover:text-white text-white"
+                      on:click="{() => window.copyAccessTokenToClipboard(provider.id, provider.accounts[0].id)}">
+                      <Fa class="h-3 w-3 text-md mr-2" icon="{faCopy}" />
+                    </button>
+                  {/if}
                 </span>
               </div>
             </div>

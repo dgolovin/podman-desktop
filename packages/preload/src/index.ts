@@ -1174,6 +1174,20 @@ function initExposure(): void {
     },
   );
 
+  contextBridge.exposeInMainWorld(
+    'copyIdTokenToClipboard',
+    async (providerId: string, sessionId: string): Promise<void> => {
+      return ipcInvoke('authentication-provider-registry:copyIdTokenToClipboard', providerId, sessionId);
+    },
+  );
+
+  contextBridge.exposeInMainWorld(
+    'copyAccessTokenToClipboard',
+    async (providerId: string, sessionId: string): Promise<void> => {
+      return ipcInvoke('authentication-provider-registry:copyAccessTokenToClipboard', providerId, sessionId);
+    },
+  );
+
   contextBridge.exposeInMainWorld('requestAuthenticationProviderSignIn', async (requestId: string): Promise<void> => {
     return ipcInvoke('authentication-provider-registry:requestAuthenticationProviderSignIn', requestId);
   });
