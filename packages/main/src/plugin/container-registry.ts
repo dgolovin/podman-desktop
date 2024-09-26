@@ -852,7 +852,7 @@ export class ContainerProviderRegistry {
       // need to find the container engine of the container
       const provider = this.internalProviders.get(engineId);
       if (!provider) {
-        throw new Error('no engine matching this container');
+        throw new Error(`no engine matching ${volumeName} volume`);
       }
       if (!provider.api) {
         throw new Error('no running provider for the matching container');
@@ -1965,10 +1965,10 @@ export class ContainerProviderRegistry {
     // need to find the container engine of the container
     const engine = this.internalProviders.get(engineId);
     if (!engine) {
-      throw new Error('no engine matching this container');
+      throw new Error(`no engine matching ${options.name} container`);
     }
     if (!engine.api) {
-      throw new Error('no running provider for the matching container');
+      throw new Error(`no running provider for ${options.name} container`);
     }
 
     // handle EnvFile by adding to Env the other variables
@@ -2173,10 +2173,10 @@ export class ContainerProviderRegistry {
       // need to find the container engine of the container
       const provider = this.internalProviders.get(engineId);
       if (!provider) {
-        throw new Error('no engine matching this container');
+        throw new Error(`no engine matching image ${id}`);
       }
       if (!provider.api) {
-        throw new Error('no running provider for the matching container');
+        throw new Error(`no running provider for the matching image ${id}`);
       }
       const imageObject = provider.api.getImage(id);
       const imageInspect = await imageObject.inspect();
@@ -2199,10 +2199,10 @@ export class ContainerProviderRegistry {
       // need to find the container engine of the container
       const provider = this.internalProviders.get(engineId);
       if (!provider) {
-        throw new Error('no engine matching this container');
+        throw new Error(`no engine matching image ${id}`);
       }
       if (!provider.api) {
-        throw new Error('no running provider for the matching container');
+        throw new Error(`no running provider for image ${id}`);
       }
       const imageObject = provider.api.getImage(id);
       return imageObject.history();
@@ -2219,10 +2219,10 @@ export class ContainerProviderRegistry {
       // need to find the container engine of the container
       const provider = this.internalProviders.get(engineId);
       if (!provider) {
-        throw new Error('no engine matching this container');
+        throw new Error(`no engine matching ${id} container`);
       }
       if (!provider.api) {
-        throw new Error('no running provider for the matching container');
+        throw new Error(`no running provider for the matching ${id} container`);
       }
 
       const containerObject = provider.api.getContainer(id);
@@ -2249,10 +2249,10 @@ export class ContainerProviderRegistry {
       // need to find the container engine of the container
       const provider = this.internalProviders.get(engineId);
       if (!provider) {
-        throw new Error('no engine matching this container');
+        throw new Error(`no engine matching image ${id}`);
       }
       if (!provider.api) {
-        throw new Error('no running provider for the matching container');
+        throw new Error(`no running provider for image ${id}`);
       }
 
       const imageObject = provider.api.getImage(id);
@@ -2293,10 +2293,10 @@ export class ContainerProviderRegistry {
       // need to find the container engine of the container
       const provider = this.internalProviders.get(engineId);
       if (!provider) {
-        throw new Error('no engine matching this container');
+        throw new Error(`no engine matching ${id} pod`);
       }
       if (!provider.libpodApi) {
-        throw new Error('no running provider for the matching container');
+        throw new Error(`no running provider for ${id} pod`);
       }
 
       const containerInspect = await provider.libpodApi.getPodInspect(id);
@@ -2335,10 +2335,10 @@ export class ContainerProviderRegistry {
       // need to find the container engine of the container
       const provider = this.internalProviders.get(engineId);
       if (!provider) {
-        throw new Error('no engine matching this container');
+        throw new Error(`no engine matching container ${id}`);
       }
       if (!provider.api) {
-        throw new Error('no running provider for the matching container');
+        throw new Error(`no running provider for container ${id}`);
       }
 
       const containerObject = provider.api.getContainer(id);
@@ -2533,10 +2533,10 @@ export class ContainerProviderRegistry {
   async info(engineId: string): Promise<containerDesktopAPI.ContainerEngineInfo> {
     const provider = this.internalProviders.get(engineId);
     if (!provider) {
-      throw new Error('no engine matching this container');
+      throw new Error(`no engine matching engineId ${engineId}`);
     }
     if (!provider.api) {
-      throw new Error('no running provider for the matching container');
+      throw new Error(`no running provider for engineId ${engineId}`);
     }
     if (provider.libpodApi) {
       const podmanInfo = await provider.libpodApi.podmanInfo();
@@ -2610,10 +2610,10 @@ export class ContainerProviderRegistry {
     // need to find the container engine of the container
     const engine = this.internalProviders.get(engineId);
     if (!engine) {
-      throw new Error('no engine matching this container');
+      throw new Error(`no engine matching container ${options.id}`);
     }
     if (!engine.api) {
-      throw new Error('no running provider for the matching container');
+      throw new Error(`no running provider for container ${options.id}`);
     }
 
     // retrieve the container and export it by copying the content to the final destination
