@@ -30,14 +30,17 @@ import App from './App.svelte';
 import { lastSubmenuPages } from './stores/breadcrumb';
 import { navigationRegistry, type NavigationRegistryEntry } from './stores/navigation/navigation-registry';
 
-const mocks = vi.hoisted(() => ({
-  DashboardPage: vi.fn(),
-  RunImage: vi.fn(),
-  ImagesList: vi.fn(),
-  SubmenuNavigation: vi.fn(),
-  DeploymentsList: vi.fn(),
-  KubernetesDashboard: vi.fn(),
-}));
+const mocks = vi.hoisted(() => {
+  (window as any).matchMedia = vi.fn();
+  return {
+    DashboardPage: vi.fn(),
+    RunImage: vi.fn(),
+    ImagesList: vi.fn(),
+    SubmenuNavigation: vi.fn(),
+    DeploymentsList: vi.fn(),
+    KubernetesDashboard: vi.fn(),
+  };
+});
 
 vi.mock('./lib/dashboard/DashboardPage.svelte', () => ({
   default: mocks.DashboardPage,

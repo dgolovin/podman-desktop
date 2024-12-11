@@ -39,6 +39,9 @@ const eventEmitter = {
 
 const dispatchEventMock = vi.fn();
 const extensionSystemIsExtensionsStartedMock = vi.fn();
+vi.hoisted(() => {
+  (window as any).matchMedia = vi.fn();
+});
 
 // mock the router
 vi.mock('tinro', () => {

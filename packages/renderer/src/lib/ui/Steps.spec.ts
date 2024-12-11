@@ -31,6 +31,10 @@ class ResizeObserver {
   unobserve = vi.fn();
 }
 
+vi.hoisted(() => {
+  (window as any).matchMedia = vi.fn();
+});
+
 beforeEach(() => {
   (window as any).ResizeObserver = ResizeObserver;
 });

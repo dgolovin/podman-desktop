@@ -26,6 +26,10 @@ import type { TaskInfo } from '/@api/taskInfo';
 
 import ToastCustomUi from './ToastCustomUi.svelte';
 
+vi.hoisted(() => {
+  (window as any).matchMedia = vi.fn();
+});
+
 const started = new Date().getTime();
 const onpop = vi.fn();
 const IN_PROGRESS_TASK: TaskInfo = {
