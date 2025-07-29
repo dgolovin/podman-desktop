@@ -4671,9 +4671,8 @@ declare module '@podman-desktop/api' {
     installationSource?: CliToolInstallationSource;
   }
 
-  export interface CliToolUpdate {
+  export interface CliToolUpdate extends CliToolSelectUpdate {
     version: string;
-    doUpdate: (logger: Logger) => Promise<void>;
   }
 
   export interface CliToolSelectUpdate {

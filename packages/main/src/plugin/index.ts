@@ -1566,9 +1566,12 @@ export class PluginSystem {
       },
     );
 
-    this.ipcHandle('cli-tool-registry:selectCliToolVersionToUpdate', async (_listener, id: string): Promise<string> => {
-      return cliToolRegistry.selectCliToolVersionToUpdate(id);
-    });
+    this.ipcHandle(
+      'cli-tool-registry:selectCliToolVersionToUpdate',
+      async (_listener, id: string, selectVersion = false): Promise<string> => {
+        return cliToolRegistry.selectCliToolVersionToUpdate(id, selectVersion);
+      },
+    );
 
     this.ipcHandle(
       'cli-tool-registry:updateCliTool',

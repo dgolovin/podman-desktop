@@ -1,12 +1,12 @@
 <script lang="ts">
-import { faCircleArrowDown, faCircleArrowUp, faCircleXmark, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { Button, Tooltip } from '@podman-desktop/ui-svelte';
+import { faCircleArrowUp, faCircleXmark, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { Button, DropdownMenu, Tooltip } from '@podman-desktop/ui-svelte';
 import Fa from 'svelte-fa';
 
 import type { CliToolInfo } from '/@api/cli-tool-info';
 
+import ActionsMenu from '../image/ActionsMenu.svelte';
 import Markdown from '../markdown/Markdown.svelte';
-import LoadingIconButton from '../ui/LoadingIconButton.svelte';
 import {
   type ConnectionCallback,
   eventCollect,
@@ -36,18 +36,20 @@ $: cliToolUninstallStatus = {
   status: cliTool.canInstall ? 'toUninstall' : 'unknown',
   action: 'uninstall',
 };
+let tooltipText = '';
+$: tooltipText = cliTool.path ? `Path: ${cliTool.path}` : 'not installed';
 
 async function showTaskManager(): Promise<void> {
   // call the command show-task-manager'
   await window.executeCommand('show-task-manager');
 }
 
-async function update(cliTool: CliToolInfo): Promise<void> {
+async function update(cliTool: CliToolInfo, selectVersion = false): Promise<void> {
   newVersion = cliTool.newVersion;
-  if (!newVersion) {
+  if (!newVersion || selectVersion) {
     // user has to select the version to update to
     try {
-      newVersion = await window.selectCliToolVersionToUpdate(cliTool.id);
+      newVersion = await window.selectCliToolVersionToUpdate(cliTool.id, selectVersion);
     } catch (e) {
       // do nothing
       console.log(e);
@@ -71,11 +73,11 @@ async function update(cliTool: CliToolInfo): Promise<void> {
   }
 }
 
-async function install(cliTool: CliToolInfo): Promise<void> {
+async function install(cliTool: CliToolInfo, latest = true): Promise<void> {
   // user has to select the version to install
   let versionToInstall;
   try {
-    versionToInstall = await window.selectCliToolVersionToInstall(cliTool.id);
+    versionToInstall = await window.selectCliToolVersionToInstall(cliTool.id, latest);
   } catch (e) {
     // do nothing
     errorMessage = `Error when selecting a version: ${String(e)}`;
@@ -162,71 +164,87 @@ function getLoggerHandler(_cliToolId: string): ConnectionCallback {
                 class="max-w-[40px] max-h-[40px] h-full" />
             {/if}
           {/if}
+          <Tooltip area-label="cli-full-path" bottomRight={true} tip="{tooltipText}">
+          <div class="flex flex-col">
+              
           <span
             id={cliTool.id}
-            class="my-auto ml-3 break-words font-semibold text-[var(--pd-invert-content-header-text)]"
+            class="flex-row my-auto ml-3 break-words font-semibold text-[var(--pd-invert-content-header-text)]"
             aria-label="cli-name">{cliTool.name}</span>
+            {#if cliTool.version}
+              <span
+              id={cliTool.id}-installed-version
+              class="flex-row my-auto ml-3 break-words font-semibold text-[var(--pd-invert-content-header-text)]"
+              aria-label="cli-name">v{cliTool.version}</span>
+            {/if}
+          
+           </div>
+           </Tooltip>
         </div>
         <div class="flex flex-row space-x-1 w-full">
           {#if !cliTool.version && cliTool.canInstall && cliToolInstallStatus}
             <div class="p-0.5 rounded-lg bg-[var(--pd-invert-content-bg)] w-fit">
-              <LoadingIconButton
-                action="install"
-                clickAction={async (): Promise<void> => {
+              <Button
+                type="primary"
+                on:click={async (): Promise<void> => {
                   if (cliTool.canInstall) {
                     await install(cliTool);
                   }
                 }}
-                icon={faCircleArrowDown}
-                leftPosition="left-[0.25rem]"
-                state={cliToolInstallStatus}
-                color="primary"
-                tooltip={`Install ${cliTool.displayName}`} />
+                inProgress={cliToolInstallStatus.inProgress}
+                title={`Install ${cliTool.displayName} v${cliTool.newVersion}`} >Install</Button>
             </div>
           {/if}
-          {#if cliTool.version && cliTool.canUpdate && cliToolUpdateStatus}
+          {#if cliTool.version && cliTool.canUpdate && cliToolUpdateStatus && cliTool.newVersion}
             <div class="p-0.5 rounded-lg bg-[var(--pd-invert-content-bg)] w-fit">
-              <LoadingIconButton
-                action="update"
-                clickAction={async (): Promise<void> => {
+              <Button
+                type="primary"
+                on:click={async (): Promise<void> => {
                   if (cliTool.canUpdate) {
                     await update(cliTool);
                   }
                 }}
-                icon={faCircleArrowUp}
-                leftPosition="left-[0.25rem]"
-                state={cliToolUpdateStatus}
-                color="primary"
-                tooltip={!cliTool.canUpdate
+                inProgress={cliToolUpdateStatus.inProgress}
+                title={!cliTool.canUpdate
                   ? 'No updates'
                   : cliTool.newVersion
                     ? `Update to v${cliTool.newVersion}`
-                    : 'Upgrade/Downgrade'} />
+                    : 'Upgrade/Downgrade'}>Update</Button>
             </div>
           {/if}
-          {#if cliTool.version && cliTool.canInstall && cliToolUninstallStatus}
-            <div class="p-0.5 rounded-lg bg-[var(--pd-invert-content-bg)] w-fit">
-              <LoadingIconButton
-                action="uninstall"
-                clickAction={async (): Promise<void> => {
-                  if (cliTool.canInstall) {
-                    await uninstall(cliTool);
-                  }
-                }}
-                icon={faTrash}
-                leftPosition="left-[0.25rem]"
-                state={cliToolUninstallStatus}
-                color="secondary"
-                tooltip={`Uninstall ${cliTool.displayName}`} />
-            </div>
-          {/if}
+          <div class="w-full"></div>
+          <Tooltip bottom tip="More Options">
+              <ActionsMenu dropdownMenu={true}>
+                <DropdownMenu.Item 
+                  title="Install specific version ..."
+                  icon={faCircleArrowUp} 
+                  onClick={async (): Promise<void> => {
+                    if (cliTool.version)  {
+                      await update(cliTool, true);
+                    } else {
+                      await install(cliTool, false);
+                    }
+                  }}
+                  enabled={(!cliTool.version && cliTool.canInstall || !!cliTool.version && cliTool.canUpdate) && !cliToolUpdateStatus.inProgress && !cliToolInstallStatus.inProgress && !cliToolUninstallStatus.inProgress}/>
+                <DropdownMenu.Item 
+                  title="Uninstall"
+                  icon={faTrash} 
+                  onClick={async (): Promise<void> => {
+                    if (cliTool.canInstall) {
+                      await uninstall(cliTool);
+                    }
+                  }}
+                  enabled={!!cliTool.version && cliTool.canInstall && !cliToolUninstallStatus.inProgress}
+                />
+              </ActionsMenu>
+            </Tooltip>
         </div>
       </div>
     </div>
     <!-- cli-tools columns -->
     <div class="grow flex-column divide-[var(--pd-content-divider)] ml-2">
       <span class="my-auto ml-3 break-words text-[var(--pd-invert-content-header-text)]" aria-label="cli-display-name"
-        >{cliTool.displayName}</span>
+        >{cliTool.displayName} {#if cliTool.newVersion ?? cliTool.version}(latest {cliTool.newVersion ?? cliTool.version}){/if}</span>
       <div
         role="region"
         class="float-right text-[var(--pd-invert-content-card-text)] px-2 text-sm"
@@ -291,18 +309,18 @@ function getLoggerHandler(_cliToolId: string): ConnectionCallback {
           </div>
         {/if}
       </div>
+      {#if showError}
+        <div class="flex flex-row w-full items-center text-xs text-[var(--pd-state-error)] p-2 ml-1 mt-2">
+          <Fa icon={faCircleXmark} class="mr-1 text-[var(--pd-state-error)]" />
+          <span>{errorMessage}</span>
+          <Button
+            type="link"
+            padding="p-0"
+            class="ml-1 text-sm"
+            aria-label="{cliTool.displayName} failed"
+            on:click={showTaskManager}>Check why it failed</Button>
+        </div>
+      {/if}
     </div>
   </div>
-  {#if showError}
-    <div class="flex flex-row items-center text-xs text-[var(--pd-state-error)] ml-[200px] mt-2">
-      <Fa icon={faCircleXmark} class="mr-1 text-[var(--pd-state-error)]" />
-      <span>{errorMessage}</span>
-      <Button
-        type="link"
-        padding="p-0"
-        class="ml-1 text-sm"
-        aria-label="{cliTool.displayName} failed"
-        on:click={showTaskManager}>Check why it failed</Button>
-    </div>
-  {/if}
 </div>

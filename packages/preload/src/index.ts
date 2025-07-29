@@ -1307,9 +1307,12 @@ export function initExposure(): void {
     return ipcInvoke('cli-tool-registry:getCliToolInfos');
   });
 
-  contextBridge.exposeInMainWorld('selectCliToolVersionToUpdate', async (id: string): Promise<string> => {
-    return ipcInvoke('cli-tool-registry:selectCliToolVersionToUpdate', id);
-  });
+  contextBridge.exposeInMainWorld(
+    'selectCliToolVersionToUpdate',
+    async (id: string, selectVersion = false): Promise<string> => {
+      return ipcInvoke('cli-tool-registry:selectCliToolVersionToUpdate', id, selectVersion);
+    },
+  );
 
   contextBridge.exposeInMainWorld(
     'updateCliTool',

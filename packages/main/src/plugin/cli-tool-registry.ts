@@ -99,9 +99,9 @@ export class CliToolRegistry {
     }
   }
 
-  async selectCliToolVersionToUpdate(id: string): Promise<string> {
+  async selectCliToolVersionToUpdate(id: string, selectVersion = false): Promise<string> {
     const cliToolUpdater = this.cliToolsUpdater.get(id);
-    if (!cliToolUpdater || this.isUpdaterToPredefinedVersion(cliToolUpdater)) {
+    if (!cliToolUpdater || (this.isUpdaterToPredefinedVersion(cliToolUpdater) && !selectVersion)) {
       throw new Error(`No updater registered for ${id}`);
     }
     return cliToolUpdater.selectVersion();
