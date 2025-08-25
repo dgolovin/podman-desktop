@@ -255,59 +255,6 @@ function getLoggerHandler(_cliToolId: string): ConnectionCallback {
         <div class="text-[var(--pd-invert-content-card-text)]">
           <Markdown markdown={cliTool.description} />
         </div>
-        {#if cliTool.version}
-          <div
-            class="flex flex-row justify-between align-center bg-[var(--pd-invert-content-bg)] p-2 rounded-lg min-w-[320px] w-fit">
-            <Tooltip area-label="cli-full-path" bottomRight={true} tip="Path: {cliTool.path}">
-              <div
-                class="flex text-[var(--pd-invert-content-card-text)] font-bold text-sm items-center"
-                aria-label="cli-version">
-                {cliTool.name} v{cliTool.version}
-              </div>
-            </Tooltip>
-            {#if cliTool.canUpdate}
-              <Button
-                type="link"
-                class="underline"
-                padding="p-0"
-                on:click={async (): Promise<void> => {
-                  if (cliTool.canUpdate) {
-                    await update(cliTool);
-                  }
-                }}
-                title={`${cliTool.displayName} will be updated${cliTool.newVersion ? ' to ' + cliTool.newVersion : ''} `}
-                disabled={!cliTool.canUpdate}
-                aria-label="Update available">
-                {`${cliTool.newVersion ? 'Update available' : 'Upgrade/Downgrade'}`}
-              </Button>
-            {/if}
-          </div>
-        {:else}
-          <div
-            class="flex flex-row justify-between align-center bg-[var(--pd-invert-content-bg)] p-2 rounded-lg min-w-[320px] w-fit">
-            <div
-              class="flex text-[var(--pd-invert-content-card-text)] font-bold text-sm items-center"
-              aria-label="no-cli-version">
-              No version detected
-            </div>
-            {#if cliTool.canInstall}
-              <Button
-                type="link"
-                class="underline"
-                padding="p-0"
-                on:click={async (): Promise<void> => {
-                  if (cliTool.canInstall) {
-                    await install(cliTool);
-                  }
-                }}
-                title={`${cliTool.displayName} will be installed`}
-                disabled={!cliTool.canInstall}
-                aria-label={`Install ${cliTool.displayName}`}>
-                Install
-              </Button>
-            {/if}
-          </div>
-        {/if}
       </div>
       {#if showError}
         <div class="flex flex-row w-full items-center text-xs text-[var(--pd-state-error)] p-2 ml-1 mt-2">
