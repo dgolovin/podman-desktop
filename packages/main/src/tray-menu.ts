@@ -28,7 +28,7 @@ import statusStopped from './assets/status-stopped.png';
 import statusUnknown from './assets/status-unknown.png';
 import { findWindow } from './electron-util.js';
 import type { AnimatedTray, TrayIconStatus } from './tray-animate-icon.js';
-import { isMac, isWindows } from './util.js';
+import { isMac } from './util.js';
 
 // extends type from the plugin
 interface ProviderMenuItem extends ProviderInfo {
@@ -140,7 +140,7 @@ export class TrayMenu {
       this.updateMenu();
     });
 
-    if (isWindows()) {
+    if (!isMac()) {
       tray.on('click', this.showMainWindow.bind(this));
     }
 
