@@ -49,6 +49,7 @@ import IngressesRoutesList from './lib/ingresses-routes/IngressesRoutesList.svel
 import RouteDetails from './lib/ingresses-routes/RouteDetails.svelte';
 import JobDetails from './lib/job/JobDetails.svelte';
 import JobList from './lib/job/JobList.svelte';
+import KubeApplyYAML from './lib/kube/KubeApplyYAML.svelte';
 import KubePlayYAML from './lib/kube/KubePlayYAML.svelte';
 import KubernetesDashboard from './lib/kube/KubernetesDashboard.svelte';
 import KubePodDetails from './lib/kube/pods/PodDetails.svelte';
@@ -171,9 +172,11 @@ tablePersistence.storage = new PodmanDesktopStoragePersist();
             <ContainerDetails containerID={meta.params.id} />
           </Route>
         </Route>
-
         <Route path="/kube/play" breadcrumb="Podman Kube Play">
           <KubePlayYAML />
+        </Route>
+        <Route path="/kube/apply" breadcrumb="Apply YAML">
+          <KubeApplyYAML />
         </Route>
         <Route path="/image/run/*" breadcrumb="Run Image">
           <RunImage />
