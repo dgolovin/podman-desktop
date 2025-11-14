@@ -52,6 +52,7 @@ import { Container } from 'inversify';
 import type { KubernetesGeneratorInfo } from '/@/plugin/api/KubernetesGeneratorInfo.js';
 import { ExtensionLoader } from '/@/plugin/extension/extension-loader.js';
 import { ExtensionWatcher } from '/@/plugin/extension/extension-watcher.js';
+import { FileService } from '/@/plugin/file-service.js';
 import type {
   GenerateKubeResult,
   KubernetesGeneratorArgument,
@@ -751,6 +752,8 @@ export class PluginSystem {
 
     container.bind<TempFileService>(TempFileService).toSelf().inSingletonScope();
 
+    container.bind<FileService>(FileService).toSelf().inSingletonScope();
+
     container.bind<ExploreFeatures>(ExploreFeatures).toSelf().inSingletonScope();
     const exploreFeatures = container.get<ExploreFeatures>(ExploreFeatures);
 
@@ -779,6 +782,7 @@ export class PluginSystem {
     const authentication = container.get<AuthenticationImpl>(AuthenticationImpl);
     const imageRegistry = container.get<ImageRegistry>(ImageRegistry);
     const tempFileService = container.get<TempFileService>(TempFileService);
+    const fileService = container.get<FileService>(FileService);
 
     container.bind<ExperimentalFeatureFeedbackHandler>(ExperimentalFeatureFeedbackHandler).toSelf().inSingletonScope();
     const experimentalFeatureFeedbackHandler = container.get<ExperimentalFeatureFeedbackHandler>(
@@ -1038,6 +1042,13 @@ export class PluginSystem {
     this.ipcHandle('temp-file-service:removeTempFile', async (_listener, filePath: string): Promise<void> => {
       return tempFileService.removeTempFile(filePath);
     });
+
+    this.ipcHandle(
+      'file-service:readFile',
+      async (_listener, filePath: string, encoding: BufferEncoding): Promise<string> => {
+        return fileService.readFile(filePath, encoding);
+      },
+    );
 
     this.ipcHandle(
       'container-provider-registry:startContainer',
