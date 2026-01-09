@@ -17,7 +17,8 @@
  ***********************************************************************/
 
 /**
- * Represents X.509 certificate information extracted from PEM-encoded certificates.
+ * Serializable certificate information for IPC communication.
+ * Maps to node-forge Certificate properties.
  */
 export interface CertificateInfo {
   /**
@@ -27,7 +28,7 @@ export interface CertificateInfo {
 
   /**
    * The full subject distinguished name (DN).
-   * Example: "CN=example.com,O=Example Inc,C=US"
+   * Example: "CN=example.com, O=Example Inc, C=US"
    */
   subject: string;
 
@@ -38,7 +39,7 @@ export interface CertificateInfo {
 
   /**
    * The full issuer distinguished name (DN).
-   * Example: "CN=DigiCert Global Root CA,O=DigiCert Inc,C=US"
+   * Example: "CN=DigiCert Global Root CA, O=DigiCert Inc, C=US"
    */
   issuer: string;
 
@@ -49,25 +50,13 @@ export interface CertificateInfo {
 
   /**
    * The date from which the certificate is valid (notBefore).
-   * Undefined if the certificate could not be parsed.
    */
   validFrom?: Date;
 
   /**
    * The date until which the certificate is valid (notAfter).
-   * Undefined if the certificate could not be parsed.
    */
   validTo?: Date;
-
-  /**
-   * SHA-256 fingerprint of the certificate.
-   */
-  fingerprint256: string;
-
-  /**
-   * SHA-1 fingerprint of the certificate (legacy, for compatibility).
-   */
-  fingerprint: string;
 
   /**
    * Indicates whether this is a Certificate Authority (CA) certificate.
@@ -76,15 +65,8 @@ export interface CertificateInfo {
 
   /**
    * Subject Alternative Names (SANs), if present.
-   * Example: "DNS:example.com, DNS:www.example.com, IP Address:192.168.1.1"
    */
   subjectAltName?: string;
-
-  /**
-   * Key usage extensions, if present.
-   * Example: ["digitalSignature", "keyEncipherment"]
-   */
-  keyUsage?: string[];
 
   /**
    * The raw PEM-encoded certificate string.

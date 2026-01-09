@@ -16,13 +16,13 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
-import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
 import * as https from 'node:https';
 import * as path from 'node:path';
 import * as tls from 'node:tls';
 
 import { injectable } from 'inversify';
+import forge from 'node-forge';
 import wincaAPI from 'win-ca/api';
 
 import { isLinux, isMac, isWindows } from '/@/util.js';
@@ -165,79 +165,95 @@ export class Certificates {
   }
 
   /**
-   * Parse a PEM-encoded certificate and extract its information.
+   * Parse a PEM-encoded certificate using node-forge.
+   * @param pem The PEM-encoded certificate string.
+   * @returns The parsed certificate as a node-forge Certificate, or undefined if parsing fails.
+   */
+  parseCertificateFromPem(pem: string): forge.pki.Certificate | undefined {
+    try {
+      return forge.pki.certificateFromPem(pem);
+    } catch (error) {
+      console.log('error while parsing certificate', error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Convert DN attributes to a readable string format.
+   */
+  private formatDN(attrs: forge.pki.CertificateField[]): string {
+    return attrs.map(attr => `${attr.shortName}=${attr.value}`).join(', ');
+  }
+
+  /**
+   * Get display name from DN attributes with fallback: CN → O → Full DN
+   */
+  private getDisplayName(dn: {
+    getField: (sn: string) => { value?: unknown } | null;
+    attributes: forge.pki.CertificateField[];
+  }): string {
+    const cn = dn.getField('CN')?.value?.toString();
+    if (cn) return cn;
+
+    const org = dn.getField('O')?.value?.toString();
+    if (org) return org;
+
+    return this.formatDN(dn.attributes);
+  }
+
+  /**
+   * Convert a node-forge Certificate to a serializable CertificateInfo for IPC.
+   * @param cert The node-forge Certificate object.
+   * @param pem The original PEM string.
+   * @returns The serializable certificate information.
+   */
+  toCertificateInfo(cert: forge.pki.Certificate, pem: string): CertificateInfo {
+    // Get basicConstraints extension for isCA
+    const basicConstraints = cert.getExtension('basicConstraints') as { cA?: boolean } | undefined;
+    const isCA = basicConstraints?.cA ?? false;
+
+    // Get subjectAltName extension
+    const sanExt = cert.getExtension('subjectAltName') as
+      | { altNames?: Array<{ type: number; value: string }> }
+      | undefined;
+    const subjectAltName = sanExt?.altNames?.map(an => an.value).join(', ');
+
+    return {
+      subjectCommonName: this.getDisplayName(cert.subject),
+      subject: this.formatDN(cert.subject.attributes),
+      issuerCommonName: this.getDisplayName(cert.issuer),
+      issuer: this.formatDN(cert.issuer.attributes),
+      serialNumber: cert.serialNumber,
+      validFrom: cert.validity.notBefore,
+      validTo: cert.validity.notAfter,
+      isCA,
+      subjectAltName,
+      pem,
+    };
+  }
+
+  /**
+   * Parse a PEM-encoded certificate and return serializable CertificateInfo.
    * @param pem The PEM-encoded certificate string.
    * @returns The parsed certificate information.
    */
   parseCertificate(pem: string): CertificateInfo {
-    try {
-      const cert = new crypto.X509Certificate(pem);
-
-      // Extract Common Name (CN) from DN string
-      // Handles comma-separated, space-separated, and newline-separated formats
-      const extractCN = (dn: string): string => {
-        // Try multiline format first (each field on its own line)
-        const multilineRegex = /^CN=(.+)$/m;
-        const multilineMatch = multilineRegex.exec(dn);
-        if (multilineMatch?.[1]) {
-          return multilineMatch[1].trim();
-        }
-
-        // Fallback to single-line format using string manipulation to avoid regex backtracking
-        const cnIndex = dn.indexOf('CN=');
-        if (cnIndex === -1) {
-          return '';
-        }
-
-        const value = dn.substring(cnIndex + 3);
-
-        // Find the end - either a comma or another field (space + uppercase letters + =)
-        const commaIndex = value.indexOf(',');
-        const nextFieldRegex = /\s[A-Z]{1,3}=/;
-        const nextFieldMatch = nextFieldRegex.exec(value);
-
-        let endIndex = value.length;
-        if (commaIndex !== -1) {
-          endIndex = commaIndex;
-        }
-        if (nextFieldMatch && nextFieldMatch.index < endIndex) {
-          endIndex = nextFieldMatch.index;
-        }
-
-        return value.substring(0, endIndex).trim();
-      };
-
-      return {
-        subjectCommonName: extractCN(cert.subject),
-        subject: cert.subject,
-        issuerCommonName: extractCN(cert.issuer),
-        issuer: cert.issuer,
-        serialNumber: cert.serialNumber,
-        validFrom: new Date(cert.validFrom),
-        validTo: new Date(cert.validTo),
-        fingerprint256: cert.fingerprint256,
-        fingerprint: cert.fingerprint,
-        isCA: cert.ca,
-        subjectAltName: cert.subjectAltName,
-        keyUsage: cert.keyUsage,
-        pem,
-      };
-    } catch (error) {
-      console.log('error while parsing certificate', error);
-      return {
-        subjectCommonName: 'Non parsable certificate',
-        subject: 'Non parsable certificate',
-        issuerCommonName: '',
-        issuer: '',
-        serialNumber: '',
-        validFrom: undefined,
-        validTo: undefined,
-        fingerprint256: '',
-        fingerprint: '',
-        isCA: false,
-        pem,
-      };
+    const cert = this.parseCertificateFromPem(pem);
+    if (cert) {
+      return this.toCertificateInfo(cert, pem);
     }
+    // Return minimal info for unparsable certificates
+    return {
+      subjectCommonName: 'Non parsable certificate',
+      subject: 'Non parsable certificate',
+      issuerCommonName: '',
+      issuer: '',
+      serialNumber: '',
+      validFrom: undefined,
+      validTo: undefined,
+      isCA: false,
+      pem,
+    };
   }
 
   /**
