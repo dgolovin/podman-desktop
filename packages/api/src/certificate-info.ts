@@ -64,11 +64,6 @@ export interface CertificateInfo {
   isCA: boolean;
 
   /**
-   * Subject Alternative Names (SANs), if present.
-   */
-  subjectAltName?: string;
-
-  /**
    * The raw PEM-encoded certificate string.
    */
   pem: string;

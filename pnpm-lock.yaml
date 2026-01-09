@@ -14,7 +14,6 @@ overrides:
   esbuild-register>esbuild: ^0.25.0
   tsx>esbuild: ^0.25.0
   vite>esbuild: ^0.25.0
-  node-forge: ^1.3.3
   config-file-ts>glob: ^10.5.0
   compression>on-headers: ^1.1.0
   electron-builder-notarize>js-yaml: ^3.14.2
@@ -91,15 +90,15 @@ importers:
       hpagent:
         specifier: ^1.2.0
         version: 1.2.0
+      jsrsasign:
+        specifier: ^11.1.0
+        version: 11.1.0
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
       moment:
         specifier: ^2.30.1
         version: 2.30.1
-      node-forge:
-        specifier: ^1.3.3
-        version: 1.3.3
       os-locale:
         specifier: ^6.0.2
         version: 6.0.2
@@ -194,6 +193,9 @@ importers:
       '@types/js-yaml':
         specifier: ^4.0.9
         version: 4.0.9
+      '@types/jsrsasign':
+        specifier: ^10.5.14
+        version: 10.5.15
       '@types/minimist':
         specifier: ^1.2.5
         version: 1.2.5
@@ -4175,6 +4177,9 @@ packages:
   '@types/json5@0.0.29':
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
 
+  '@types/jsrsasign@10.5.15':
+    resolution: {integrity: sha512-3stUTaSRtN09PPzVWR6aySD9gNnuymz+WviNHoTb85dKu+BjaV4uBbWWGykBBJkfwPtcNZVfTn2lbX00U+yhpQ==}
+
   '@types/katex@0.16.7':
     resolution: {integrity: sha512-HMwFiRujE5PjrgwHQ25+bsLJgowjGjm5Z8FVSf0N6PwgJrwxH0QxzHYDcKsTfV3wva0vzrpqMTJS2jXPr5BMEQ==}
 
@@ -8116,6 +8121,9 @@ packages:
     resolution: {integrity: sha512-8TNmfeTCk2Le33A3vRRwtuworG/L5RrgMvdjhKZxvyShO+mBu2fP50OWUjRLNtvw344DdDarFh9buFAZs5ujeA==}
     engines: {node: '>=18.0.0'}
     hasBin: true
+
+  jsrsasign@11.1.0:
+    resolution: {integrity: sha512-Ov74K9GihaK9/9WncTe1mPmvrO7Py665TUfUKvraXBpu+xcTWitrtuOwcjf4KMU9maPaYn0OuaWy0HOzy/GBXg==}
 
   jsx-ast-utils-x@0.1.0:
     resolution: {integrity: sha512-eQQBjBnsVtGacsG9uJNB8qOr3yA8rga4wAaGG1qRcBzSIvfhERLrWxMAM1hp5fcS6Abo8M4+bUBTekYR0qTPQw==}
@@ -16105,6 +16113,8 @@ snapshots:
 
   '@types/json5@0.0.29': {}
 
+  '@types/jsrsasign@10.5.15': {}
+
   '@types/katex@0.16.7': {}
 
   '@types/keyv@3.1.4':
@@ -20804,6 +20814,8 @@ snapshots:
       '@jsep-plugin/assignment': 1.3.0(jsep@1.4.0)
       '@jsep-plugin/regex': 1.0.4(jsep@1.4.0)
       jsep: 1.4.0
+
+  jsrsasign@11.1.0: {}
 
   jsx-ast-utils-x@0.1.0: {}
 

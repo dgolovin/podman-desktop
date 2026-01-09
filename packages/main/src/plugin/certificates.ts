@@ -22,7 +22,7 @@ import * as path from 'node:path';
 import * as tls from 'node:tls';
 
 import { injectable } from 'inversify';
-import forge from 'node-forge';
+import { X509 } from 'jsrsasign';
 import wincaAPI from 'win-ca/api';
 
 import { isLinux, isMac, isWindows } from '/@/util.js';
@@ -165,13 +165,15 @@ export class Certificates {
   }
 
   /**
-   * Parse a PEM-encoded certificate using node-forge.
+   * Parse a PEM-encoded certificate using jsrsasign.
    * @param pem The PEM-encoded certificate string.
-   * @returns The parsed certificate as a node-forge Certificate, or undefined if parsing fails.
+   * @returns The parsed X509 certificate, or undefined if parsing fails.
    */
-  parseCertificateFromPem(pem: string): forge.pki.Certificate | undefined {
+  parseCertificateFromPem(pem: string): X509 | undefined {
     try {
-      return forge.pki.certificateFromPem(pem);
+      const x509 = new X509();
+      x509.readCertPEM(pem);
+      return x509;
     } catch (error) {
       console.log('error while parsing certificate', error);
       return undefined;
@@ -179,55 +181,92 @@ export class Certificates {
   }
 
   /**
-   * Convert DN attributes to a readable string format.
+   * Extract a specific RDN value from a DN array.
+   * @param dnArray The DN array from jsrsasign (e.g., x509.getSubject().array)
+   * @param type The RDN type to find (e.g., 'CN', 'O')
    */
-  private formatDN(attrs: forge.pki.CertificateField[]): string {
-    return attrs.map(attr => `${attr.shortName}=${attr.value}`).join(', ');
+  private getRDNValue(dnArray: Array<Array<{ type: string; value: string; ds: string }>>, type: string): string {
+    for (const rdn of dnArray) {
+      for (const attr of rdn) {
+        if (attr.type === type) {
+          return attr.value;
+        }
+      }
+    }
+    return '';
   }
 
   /**
-   * Get display name from DN attributes with fallback: CN → O → Full DN
+   * Get display name from DN with fallback: CN → O → Full DN string
    */
-  private getDisplayName(dn: {
-    getField: (sn: string) => { value?: unknown } | null;
-    attributes: forge.pki.CertificateField[];
-  }): string {
-    const cn = dn.getField('CN')?.value?.toString();
+  private getDisplayName(x509: X509, getSubjectOrIssuer: 'subject' | 'issuer'): string {
+    const dn = getSubjectOrIssuer === 'subject' ? x509.getSubject() : x509.getIssuer();
+    const dnArray = dn.array;
+
+    const cn = this.getRDNValue(dnArray, 'CN');
     if (cn) return cn;
 
-    const org = dn.getField('O')?.value?.toString();
+    const org = this.getRDNValue(dnArray, 'O');
     if (org) return org;
 
-    return this.formatDN(dn.attributes);
+    return getSubjectOrIssuer === 'subject' ? x509.getSubjectString() : x509.getIssuerString();
   }
 
   /**
-   * Convert a node-forge Certificate to a serializable CertificateInfo for IPC.
-   * @param cert The node-forge Certificate object.
+   * Parse jsrsasign date format (e.g., "240101120000Z") to Date object.
+   */
+  private parseX509Date(dateStr: string): Date | undefined {
+    if (!dateStr) return undefined;
+    try {
+      // jsrsasign returns dates in format: YYMMDDHHmmssZ or YYYYMMDDHHmmssZ
+      let year: number;
+      let rest: string;
+
+      if (dateStr.length === 13) {
+        // YYMMDDHHmmssZ format
+        const yy = parseInt(dateStr.substring(0, 2), 10);
+        year = yy >= 50 ? 1900 + yy : 2000 + yy;
+        rest = dateStr.substring(2);
+      } else if (dateStr.length === 15) {
+        // YYYYMMDDHHmmssZ format
+        year = parseInt(dateStr.substring(0, 4), 10);
+        rest = dateStr.substring(4);
+      } else {
+        return undefined;
+      }
+
+      const month = parseInt(rest.substring(0, 2), 10) - 1;
+      const day = parseInt(rest.substring(2, 4), 10);
+      const hour = parseInt(rest.substring(4, 6), 10);
+      const minute = parseInt(rest.substring(6, 8), 10);
+      const second = parseInt(rest.substring(8, 10), 10);
+
+      return new Date(Date.UTC(year, month, day, hour, minute, second));
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * Convert a jsrsasign X509 to a serializable CertificateInfo for IPC.
+   * @param x509 The jsrsasign X509 object.
    * @param pem The original PEM string.
    * @returns The serializable certificate information.
    */
-  toCertificateInfo(cert: forge.pki.Certificate, pem: string): CertificateInfo {
+  toCertificateInfo(x509: X509, pem: string): CertificateInfo {
     // Get basicConstraints extension for isCA
-    const basicConstraints = cert.getExtension('basicConstraints') as { cA?: boolean } | undefined;
+    const basicConstraints = x509.getExtBasicConstraints();
     const isCA = basicConstraints?.cA ?? false;
 
-    // Get subjectAltName extension
-    const sanExt = cert.getExtension('subjectAltName') as
-      | { altNames?: Array<{ type: number; value: string }> }
-      | undefined;
-    const subjectAltName = sanExt?.altNames?.map(an => an.value).join(', ');
-
     return {
-      subjectCommonName: this.getDisplayName(cert.subject),
-      subject: this.formatDN(cert.subject.attributes),
-      issuerCommonName: this.getDisplayName(cert.issuer),
-      issuer: this.formatDN(cert.issuer.attributes),
-      serialNumber: cert.serialNumber,
-      validFrom: cert.validity.notBefore,
-      validTo: cert.validity.notAfter,
+      subjectCommonName: this.getDisplayName(x509, 'subject'),
+      subject: x509.getSubjectString(),
+      issuerCommonName: this.getDisplayName(x509, 'issuer'),
+      issuer: x509.getIssuerString(),
+      serialNumber: x509.getSerialNumberHex(),
+      validFrom: this.parseX509Date(x509.getNotBefore()),
+      validTo: this.parseX509Date(x509.getNotAfter()),
       isCA,
-      subjectAltName,
       pem,
     };
   }
@@ -238,9 +277,9 @@ export class Certificates {
    * @returns The parsed certificate information.
    */
   parseCertificate(pem: string): CertificateInfo {
-    const cert = this.parseCertificateFromPem(pem);
-    if (cert) {
-      return this.toCertificateInfo(cert, pem);
+    const x509 = this.parseCertificateFromPem(pem);
+    if (x509) {
+      return this.toCertificateInfo(x509, pem);
     }
     // Return minimal info for unparsable certificates
     return {
