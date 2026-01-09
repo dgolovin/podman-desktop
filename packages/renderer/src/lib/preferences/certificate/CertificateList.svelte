@@ -7,7 +7,9 @@ import SlideToggle from '/@/lib/ui/SlideToggle.svelte';
 import { certificatesInfos, filtered, searchPattern } from '/@/stores/certificates';
 import type { CertificateInfo } from '/@api/certificate-info';
 
+import CertificateColumnIssuer from './CertificateColumnIssuer.svelte';
 import CertificateColumnSimple from './CertificateColumnSimple.svelte';
+import CertificateColumnSubject from './CertificateColumnSubject.svelte';
 import CertificateEmptyScreen from './CertificateEmptyScreen.svelte';
 import CertificateIcon from './CertificateIcon.svelte';
 
@@ -72,17 +74,17 @@ function formatExpirationDate(date: Date | undefined): string {
   });
 }
 
-let nameColumn = new TableColumn<CertificateInfoUI, string>('Certificate Name', {
+let nameColumn = new TableColumn<CertificateInfoUI, CertificateInfoUI>('Certificate Name', {
   width: '2fr',
-  renderMapping: (cert): string => cert.subject ?? 'Unknown',
-  renderer: CertificateColumnSimple,
+  renderMapping: (cert): CertificateInfoUI => cert,
+  renderer: CertificateColumnSubject,
   comparator: (a, b): number => getDisplayName(a).localeCompare(getDisplayName(b)),
 });
 
-let issuerColumn = new TableColumn<CertificateInfoUI, string>('Issuer', {
+let issuerColumn = new TableColumn<CertificateInfoUI, CertificateInfoUI>('Issuer', {
   width: '2fr',
-  renderMapping: (cert): string => cert.issuer ?? 'Unknown',
-  renderer: CertificateColumnSimple,
+  renderMapping: (cert): CertificateInfoUI => cert,
+  renderer: CertificateColumnIssuer,
   comparator: (a, b): number => getIssuerDisplayName(a).localeCompare(getIssuerDisplayName(b)),
 });
 
@@ -109,10 +111,11 @@ const columns = [nameColumn, issuerColumn, serialColumn, expiresColumn];
 const row = new TableRow<CertificateInfoUI>({});
 
 /**
- * Utility function for the Table to get the key to use for each item
+ * Utility function for the Table to get the key to use for each item.
+ * Uses serialNumber + issuer which is guaranteed unique per RFC 5280.
  */
 function key(item: CertificateInfoUI): string {
-  return `${item.fingerprint256 || item.serialNumber || item.subjectCommonName}`;
+  return `${item.serialNumber}:${item.issuer}`;
 }
 
 /**

@@ -16,13 +16,14 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
-import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
 import * as https from 'node:https';
 import * as path from 'node:path';
 import * as tls from 'node:tls';
 
+import * as asn1js from 'asn1js';
 import { injectable } from 'inversify';
+import * as pkijs from 'pkijs';
 import wincaAPI from 'win-ca/api';
 
 import { isLinux, isMac, isWindows } from '/@/util.js';
@@ -165,61 +166,103 @@ export class Certificates {
   }
 
   /**
-   * Parse a PEM-encoded certificate and extract its information.
+   * Convert PEM to ArrayBuffer for PKI.js
+   */
+  private pemToArrayBuffer(pem: string): ArrayBuffer {
+    const b64 = pem
+      .replace(/-----BEGIN CERTIFICATE-----/g, '')
+      .replace(/-----END CERTIFICATE-----/g, '')
+      .replace(/\s/g, '');
+    const binaryString = Buffer.from(b64, 'base64').toString('binary');
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+  }
+
+  /**
+   * Get RDN value by type OID from RelativeDistinguishedNames
+   * Common OIDs: CN=2.5.4.3, O=2.5.4.10, OU=2.5.4.11, C=2.5.4.6
+   */
+  private getRDNValue(rdns: pkijs.RelativeDistinguishedNames, oid: string): string {
+    for (const rdn of rdns.typesAndValues) {
+      if (rdn.type === oid) {
+        return rdn.value.valueBlock.value?.toString() ?? '';
+      }
+    }
+    return '';
+  }
+
+  /**
+   * Format RelativeDistinguishedNames as a string
+   */
+  private formatDN(rdns: pkijs.RelativeDistinguishedNames): string {
+    const oidMap: Record<string, string> = {
+      '2.5.4.3': 'CN',
+      '2.5.4.6': 'C',
+      '2.5.4.7': 'L',
+      '2.5.4.8': 'ST',
+      '2.5.4.10': 'O',
+      '2.5.4.11': 'OU',
+      '1.2.840.113549.1.9.1': 'E',
+    };
+    return rdns.typesAndValues
+      .map((rdn: pkijs.AttributeTypeAndValue) => {
+        const name = oidMap[rdn.type] ?? rdn.type;
+        const value = rdn.value.valueBlock.value?.toString() ?? '';
+        return `${name}=${value}`;
+      })
+      .join(', ');
+  }
+
+  /**
+   * Get display name with fallback: CN → O → Full DN
+   */
+  private getDisplayName(rdns: pkijs.RelativeDistinguishedNames): string {
+    const cn = this.getRDNValue(rdns, '2.5.4.3'); // CN
+    if (cn) return cn;
+
+    const org = this.getRDNValue(rdns, '2.5.4.10'); // O
+    if (org) return org;
+
+    return this.formatDN(rdns);
+  }
+
+  /**
+   * Parse a PEM-encoded certificate using PKI.js.
    * @param pem The PEM-encoded certificate string.
    * @returns The parsed certificate information.
    */
   parseCertificate(pem: string): CertificateInfo {
     try {
-      const cert = new crypto.X509Certificate(pem);
+      const asn1 = asn1js.fromBER(this.pemToArrayBuffer(pem));
+      if (asn1.offset === -1) {
+        throw new Error('Failed to parse ASN.1 structure');
+      }
+      const cert = new pkijs.Certificate({ schema: asn1.result });
 
-      // Extract Common Name (CN) from DN string
-      // Handles comma-separated, space-separated, and newline-separated formats
-      const extractCN = (dn: string): string => {
-        // Try multiline format first (each field on its own line)
-        const multilineRegex = /^CN=(.+)$/m;
-        const multilineMatch = multilineRegex.exec(dn);
-        if (multilineMatch?.[1]) {
-          return multilineMatch[1].trim();
-        }
+      // Get basicConstraints for isCA
+      let isCA = false;
+      const basicConstraintsExt = cert.extensions?.find((ext: pkijs.Extension) => ext.extnID === '2.5.29.19');
+      if (basicConstraintsExt?.parsedValue) {
+        isCA = (basicConstraintsExt.parsedValue as pkijs.BasicConstraints).cA ?? false;
+      }
 
-        // Fallback to single-line format using string manipulation to avoid regex backtracking
-        const cnIndex = dn.indexOf('CN=');
-        if (cnIndex === -1) {
-          return '';
-        }
-
-        const value = dn.substring(cnIndex + 3);
-
-        // Find the end - either a comma or another field (space + uppercase letters + =)
-        const commaIndex = value.indexOf(',');
-        const nextFieldRegex = /\s[A-Z]{1,3}=/;
-        const nextFieldMatch = nextFieldRegex.exec(value);
-
-        let endIndex = value.length;
-        if (commaIndex !== -1) {
-          endIndex = commaIndex;
-        }
-        if (nextFieldMatch && nextFieldMatch.index < endIndex) {
-          endIndex = nextFieldMatch.index;
-        }
-
-        return value.substring(0, endIndex).trim();
-      };
+      // Convert serial number to hex string
+      const serialNumber = Array.from(cert.serialNumber.valueBlock.valueHexView)
+        .map(b => b.toString(16).padStart(2, '0').toUpperCase())
+        .join('');
 
       return {
-        subjectCommonName: extractCN(cert.subject),
-        subject: cert.subject,
-        issuerCommonName: extractCN(cert.issuer),
-        issuer: cert.issuer,
-        serialNumber: cert.serialNumber,
-        validFrom: new Date(cert.validFrom),
-        validTo: new Date(cert.validTo),
-        fingerprint256: cert.fingerprint256,
-        fingerprint: cert.fingerprint,
-        isCA: cert.ca,
-        subjectAltName: cert.subjectAltName,
-        keyUsage: cert.keyUsage,
+        subjectCommonName: this.getDisplayName(cert.subject),
+        subject: this.formatDN(cert.subject),
+        issuerCommonName: this.getDisplayName(cert.issuer),
+        issuer: this.formatDN(cert.issuer),
+        serialNumber,
+        validFrom: cert.notBefore.value,
+        validTo: cert.notAfter.value,
+        isCA,
         pem,
       };
     } catch (error) {
@@ -232,8 +275,6 @@ export class Certificates {
         serialNumber: '',
         validFrom: undefined,
         validTo: undefined,
-        fingerprint256: '',
-        fingerprint: '',
         isCA: false,
         pem,
       };
