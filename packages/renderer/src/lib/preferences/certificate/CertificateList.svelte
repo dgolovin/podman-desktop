@@ -7,7 +7,9 @@ import SlideToggle from '/@/lib/ui/SlideToggle.svelte';
 import { certificatesInfos, filtered, searchPattern } from '/@/stores/certificates';
 import type { CertificateInfo } from '/@api/certificate-info';
 
+import CertificateColumnIssuer from './CertificateColumnIssuer.svelte';
 import CertificateColumnSimple from './CertificateColumnSimple.svelte';
+import CertificateColumnSubject from './CertificateColumnSubject.svelte';
 import CertificateEmptyScreen from './CertificateEmptyScreen.svelte';
 import CertificateIcon from './CertificateIcon.svelte';
 
@@ -48,14 +50,14 @@ onDestroy(() => {
  * Get display name for certificate (Subject: CN → Full DN → 'Unknown')
  */
 function getDisplayName(cert: CertificateInfo): string {
-  return cert.subjectCommonName || cert.subject || 'Unknown';
+  return cert.subjectCommonName || 'Unknown';
 }
 
 /**
  * Get issuer display name (Issuer: CN → Full DN → 'Unknown')
  */
 function getIssuerDisplayName(cert: CertificateInfo): string {
-  return cert.issuerCommonName || cert.issuer || 'Unknown';
+  return cert.issuerCommonName || 'Unknown';
 }
 
 /**
@@ -72,17 +74,15 @@ function formatExpirationDate(date: Date | undefined): string {
   });
 }
 
-let nameColumn = new TableColumn<CertificateInfoUI, string>('Certificate Name', {
+let nameColumn = new TableColumn<CertificateInfoUI>('Certificate Name', {
   width: '2fr',
-  renderMapping: (cert): string => cert.subject ?? 'Unknown',
-  renderer: CertificateColumnSimple,
+  renderer: CertificateColumnSubject,
   comparator: (a, b): number => getDisplayName(a).localeCompare(getDisplayName(b)),
 });
 
-let issuerColumn = new TableColumn<CertificateInfoUI, string>('Issuer', {
+let issuerColumn = new TableColumn<CertificateInfoUI>('Issuer', {
   width: '2fr',
-  renderMapping: (cert): string => cert.issuer ?? 'Unknown',
-  renderer: CertificateColumnSimple,
+  renderer: CertificateColumnIssuer,
   comparator: (a, b): number => getIssuerDisplayName(a).localeCompare(getIssuerDisplayName(b)),
 });
 
@@ -112,14 +112,7 @@ const row = new TableRow<CertificateInfoUI>({});
  * Utility function for the Table to get the key to use for each item
  */
 function key(item: CertificateInfoUI): string {
-  return `${item.fingerprint256 || item.serialNumber || item.subjectCommonName}`;
-}
-
-/**
- * Utility function for the Table to get the label to use for each item
- */
-function label(item: CertificateInfoUI): string {
-  return getDisplayName(item);
+  return `${item.serialNumber}-${item.issuer}`;
 }
 
 function onChecked(state: boolean): void {
@@ -176,7 +169,7 @@ function onChecked(state: boolean): void {
             row={row}
             defaultSortColumn="Certificate Name"
             key={key}
-            label={label}
+            label={getDisplayName}
             enableLayoutConfiguration={true}
             on:update={(): CertificateInfoUI[] => (certificates = certificates)}>
           </Table>

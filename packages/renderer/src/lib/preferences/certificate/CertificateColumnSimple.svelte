@@ -6,7 +6,6 @@ interface Props {
 let { object }: Props = $props();
 </script>
 
-<div title={object} class="text-(--pd-table-body-text-highlight) overflow-hidden text-ellipsis">
-  {object}
+<div class="text-(--pd-table-body-text-highlight) overflow-hidden text-ellipsis">
+  <span title={object} class="mx-1">{object}</span>
 </div>
-
