@@ -25,6 +25,7 @@ import type * as containerDesktopAPI from '@podman-desktop/api';
 import { app } from 'electron';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import type { CertificateSyncTargetRegistry } from '/@/plugin/certificate-sync-target-registry.js';
 import type { Certificates } from '/@/plugin/certificates.js';
 import type { ContributionManager } from '/@/plugin/contribution-manager.js';
 import type { ExtensionApiVersion } from '/@/plugin/extension/extension-api-version.js';
@@ -281,6 +282,7 @@ const dialogRegistry: DialogRegistry = {
 } as unknown as DialogRegistry;
 
 const certificates: Certificates = {} as unknown as Certificates;
+const certificateSyncTargetRegistry: CertificateSyncTargetRegistry = {} as unknown as CertificateSyncTargetRegistry;
 
 const extensionApiVersion: ExtensionApiVersion = {
   getApiVersion: vi.fn(),
@@ -383,6 +385,7 @@ beforeEach(() => {
     dialogRegistry,
     safeStorageRegistry,
     certificates,
+    certificateSyncTargetRegistry,
     extensionWatcher,
     extensionDevelopmentFolder,
     extensionAnalyzer,

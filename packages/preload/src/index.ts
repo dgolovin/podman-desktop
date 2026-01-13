@@ -46,6 +46,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { ApiSenderType } from '/@api/api-sender/api-sender-type';
 import type { AuthenticationProviderInfo } from '/@api/authentication/authentication';
 import type { CertificateInfo } from '/@api/certificate-info';
+import type { CertificateSyncTargetInfo } from '/@api/certificate-sync-target';
 import type { CliToolInfo } from '/@api/cli-tool-info';
 import type { ColorInfo } from '/@api/color-info';
 import type { CommandInfo } from '/@api/command-info';
@@ -2702,6 +2703,17 @@ export function initExposure(): void {
   contextBridge.exposeInMainWorld('listCertificates', async (): Promise<CertificateInfo[]> => {
     return ipcInvoke('certificates:listCertificates');
   });
+
+  contextBridge.exposeInMainWorld('getCertificateSyncTargets', async (): Promise<CertificateSyncTargetInfo[]> => {
+    return ipcInvoke('certificates:getSyncTargets');
+  });
+
+  contextBridge.exposeInMainWorld(
+    'synchronizeCertificatesToTarget',
+    async (providerId: string, targetId: string): Promise<void> => {
+      return ipcInvoke('certificates:synchronizeToTarget', providerId, targetId);
+    },
+  );
 }
 
 // expose methods
