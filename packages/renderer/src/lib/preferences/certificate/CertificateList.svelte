@@ -6,7 +6,7 @@ import SettingsPage from '/@/lib/preferences/SettingsPage.svelte';
 import { certificatesInfos, filtered, searchPattern } from '/@/stores/certificates';
 import type { CertificateInfo } from '/@api/certificate-info';
 
-import { getIssuerDisplayName, getSubjectDisplayName } from './certificate-util';
+import { getIssuerDisplayNameWithSelfSigned, getSubjectDisplayName } from './certificate-util';
 import CertificateColumnExpires from './CertificateColumnExpires.svelte';
 import CertificateColumnIssuer from './CertificateColumnIssuer.svelte';
 import CertificateColumnSimple from './CertificateColumnSimple.svelte';
@@ -48,7 +48,8 @@ let issuerColumn = new TableColumn<CertificateInfoUI, CertificateInfoUI>('Issuer
   width: '2fr',
   renderMapping: (cert): CertificateInfoUI => cert,
   renderer: CertificateColumnIssuer,
-  comparator: (a, b): number => getIssuerDisplayName(a).localeCompare(getIssuerDisplayName(b)),
+  comparator: (a, b): number =>
+    getIssuerDisplayNameWithSelfSigned(a).localeCompare(getIssuerDisplayNameWithSelfSigned(b)),
 });
 
 let serialColumn = new TableColumn<CertificateInfoUI, string>('Serial Number', {
