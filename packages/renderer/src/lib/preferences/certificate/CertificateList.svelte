@@ -120,24 +120,22 @@ onDestroy(() => {
     </div>
   </div>
   {/snippet}
-    <div class="flex flex-col px-2 py-2 w-full">
-      <div class="flex min-w-full h-full">
-        {#if $certificatesInfos.length === 0}
-          <CertificateEmptyScreen />
-        {:else if certificates.length === 0}
-          <FilteredEmptyScreen icon={CertificateIcon} kind="certificates" bind:searchTerm={searchTerm} />
-        {:else}
-          <Table
-            kind="certificate"
-            data={certificates}
-            columns={columns}
-            row={row}
-            defaultSortColumn="Certificate Name"
-            key={key}
-            label={label}
-            enableLayoutConfiguration={true}>
-          </Table>
-        {/if}
-      </div>
+    <div class="flex flex-col -mx-5 py-2 w-full">
+      {#if $certificatesInfos.length === 0}
+        <CertificateEmptyScreen />
+      {:else if certificates.length === 0}
+        <FilteredEmptyScreen icon={CertificateIcon} kind="certificates" bind:searchTerm={searchTerm} />
+      {:else}
+        <Table
+          kind="certificate"
+          data={certificates}
+          columns={columns}
+          row={row}
+          defaultSortColumn="Certificate Name"
+          key={key}
+          label={label}
+          enableLayoutConfiguration={true}>
+        </Table>
+      {/if}
     </div>
 </SettingsPage>
