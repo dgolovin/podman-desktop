@@ -12,7 +12,9 @@ let { object }: Props = $props();
 
 const expired = $derived(isExpired(object));
 const displayDate = $derived(formatExpirationDate(object.validTo));
-const tooltipText = $derived(expired ? `Expired: ${displayDate}` : `Valid until: ${displayDate}`);
+const tooltipText = $derived(
+  !object.validTo ? 'Expiration date: Unknown' : expired ? `Expired: ${displayDate}` : `Valid until: ${displayDate}`,
+);
 </script>
 
 <div class="mx-1 flex items-center gap-2 overflow-hidden">
