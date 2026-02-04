@@ -104,6 +104,8 @@ function handleMainClick(): void {
   }
 
   if (!isMainDisabled && selectedOptions.length > 0) {
+    // Close dropdown before executing action
+    showDropdown = false;
     onAction?.(selectedOptions);
   }
 }
