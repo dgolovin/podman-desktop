@@ -17,9 +17,8 @@
  ***********************************************************************/
 
 import type * as containerDesktopAPI from '@podman-desktop/api';
+import type { CertificateSyncTargetInfo } from '@podman-desktop/core-api';
 import { inject, injectable } from 'inversify';
-
-import type { CertificateSyncTargetInfo } from '/@api/certificate-sync-target.js';
 
 import { Certificates } from './certificates.js';
 import { Emitter } from './events/emitter.js';

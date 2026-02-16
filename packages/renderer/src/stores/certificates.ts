@@ -16,11 +16,9 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
-import type { CertificateInfo } from '@podman-desktop/core-api';
+import type { CertificateInfo, CertificateSyncTargetInfo } from '@podman-desktop/core-api';
 import type { Writable } from 'svelte/store';
 import { derived, writable } from 'svelte/store';
-
-import type { CertificateSyncTargetInfo } from '/@api/certificate-sync-target';
 
 import { EventStore } from './event-store';
 import { findMatchInLeaves } from './search-util';

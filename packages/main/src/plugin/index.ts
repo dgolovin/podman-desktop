@@ -44,6 +44,7 @@ import type {
 import type * as containerDesktopAPI from '@podman-desktop/api';
 import type {
   CertificateInfo,
+  CertificateSyncTargetInfo,
   CliToolInfo,
   ColorInfo,
   CommandInfo,
