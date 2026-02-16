@@ -36,7 +36,6 @@ import { inject, injectable, preDestroy } from 'inversify';
 
 import { AuthenticationImpl } from '/@/plugin/authentication.js';
 import { CancellationTokenSource } from '/@/plugin/cancellation-token.js';
-import { CertificateSyncTargetRegistry } from '../certificate-sync-target-registry.js';
 import { Certificates } from '/@/plugin/certificates.js';
 import { CliToolRegistry } from '/@/plugin/cli-tool-registry.js';
 import { ColorRegistry } from '/@/plugin/color-registry.js';
@@ -95,6 +94,7 @@ import { securityRestrictionCurrentHandler } from '/@/security-restrictions-hand
 import { getBase64Image, isLinux, isMac, isWindows } from '/@/util.js';
 import product from '/@product.json' with { type: 'json' };
 
+import { CertificateSyncTargetRegistry } from '../certificate-sync-target-registry.js';
 import { type AnalyzedExtension, ExtensionAnalyzer, ExtensionAnalyzerOptions } from './extension-analyzer.js';
 import { ExtensionDevelopmentFolders } from './extension-development-folders.js';
 import { ExtensionWatcher } from './extension-watcher.js';

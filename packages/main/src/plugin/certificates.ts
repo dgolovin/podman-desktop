@@ -21,8 +21,8 @@ import * as https from 'node:https';
 import * as path from 'node:path';
 import * as tls from 'node:tls';
 
-import type { CertificateInfo } from '@podman-desktop/core-api';
 import type { Event } from '@podman-desktop/api';
+import type { CertificateInfo } from '@podman-desktop/core-api';
 import * as asn1js from 'asn1js';
 import { injectable } from 'inversify';
 import * as pkijs from 'pkijs';
