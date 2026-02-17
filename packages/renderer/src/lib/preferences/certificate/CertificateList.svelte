@@ -1,5 +1,6 @@
 <script lang="ts">
 import { faArrowsRotate, faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
+import type { CertificateInfo } from '@podman-desktop/core-api';
 import type { SplitButtonOption } from '@podman-desktop/ui-svelte';
 import {
   Button,
@@ -15,7 +16,6 @@ import { onDestroy } from 'svelte';
 
 import SettingsPage from '/@/lib/preferences/SettingsPage.svelte';
 import { certificatesInfos, certificateSyncTargets, filtered, searchPattern } from '/@/stores/certificates';
-import type { CertificateInfo } from '/@api/certificate-info';
 
 import { getIssuerDisplayNameWithSelfSigned, getSubjectDisplayName } from './certificate-util';
 import CertificateColumnExpires from './CertificateColumnExpires.svelte';
