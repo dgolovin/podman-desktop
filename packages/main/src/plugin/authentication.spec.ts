@@ -610,3 +610,132 @@ test('getSession returns undefined in silent mode when no allowance decision exi
   // Session should not be returned in silent mode without prior allowance
   expect(sessionForExt2).toBeUndefined();
 });
+
+test('getSession auto-allows preinstalled extension without prompting', async () => {
+  const mb = {
+    showMessageBox: vi.fn().mockResolvedValue({ response: 1 }),
+  } as unknown as MessageBox;
+  const authentication = new AuthenticationImpl(apiSender, mb);
+  const authProvider = new AuthenticationProviderSingleAccount();
+  authentication.registerAuthenticationProvider('company.auth-provider', 'Provider 1', authProvider);
+
+  // ext1 creates a session
+  const session = await authentication.getSession(
+    { id: 'ext1', label: 'Ext 1' },
+    'company.auth-provider',
+    ['scope1', 'scope2'],
+    { createIfNone: true },
+  );
+
+  expect(session).toBeDefined();
+
+  vi.mocked(mb.showMessageBox).mockClear();
+
+  // Preinstalled ext2 (removable: false) accesses the session — should not prompt
+  const sessionForExt2 = await authentication.getSession(
+    { id: 'ext2', label: 'Extension 2', removable: false },
+    'company.auth-provider',
+    ['scope1', 'scope2'],
+  );
+
+  expect(mb.showMessageBox).not.toHaveBeenCalled();
+  expect(sessionForExt2).toBeDefined();
+  expect(sessionForExt2?.id).toBe(session!.id);
+  expect(authentication.isAccessAllowed('company.auth-provider', session!.account.id, 'ext2')).toBe(true);
+});
+
+test('getSession auto-allows preinstalled extension even in silent mode', async () => {
+  const mb = {
+    showMessageBox: vi.fn().mockResolvedValue({ response: 1 }),
+  } as unknown as MessageBox;
+  const authentication = new AuthenticationImpl(apiSender, mb);
+  const authProvider = new AuthenticationProviderSingleAccount();
+  authentication.registerAuthenticationProvider('company.auth-provider', 'Provider 1', authProvider);
+
+  const session = await authentication.getSession(
+    { id: 'ext1', label: 'Ext 1' },
+    'company.auth-provider',
+    ['scope1', 'scope2'],
+    { createIfNone: true },
+  );
+
+  expect(session).toBeDefined();
+
+  vi.mocked(mb.showMessageBox).mockClear();
+
+  // Preinstalled ext2 in silent mode — should auto-allow
+  const sessionForExt2 = await authentication.getSession(
+    { id: 'ext2', label: 'Extension 2', removable: false },
+    'company.auth-provider',
+    ['scope1', 'scope2'],
+    { silent: true },
+  );
+
+  expect(mb.showMessageBox).not.toHaveBeenCalled();
+  expect(sessionForExt2).toBeDefined();
+  expect(sessionForExt2?.id).toBe(session!.id);
+});
+
+test('getSession still prompts for user-installed extension (removable: true)', async () => {
+  const mb = {
+    showMessageBox: vi.fn().mockResolvedValue({ response: 1 }),
+  } as unknown as MessageBox;
+  const authentication = new AuthenticationImpl(apiSender, mb);
+  const authProvider = new AuthenticationProviderSingleAccount();
+  authentication.registerAuthenticationProvider('company.auth-provider', 'Provider 1', authProvider);
+
+  const session = await authentication.getSession(
+    { id: 'ext1', label: 'Ext 1' },
+    'company.auth-provider',
+    ['scope1', 'scope2'],
+    { createIfNone: true },
+  );
+
+  expect(session).toBeDefined();
+
+  vi.mocked(mb.showMessageBox).mockClear();
+  vi.mocked(mb.showMessageBox).mockResolvedValue({ response: 1 });
+
+  // User-installed ext (removable: true) should still be prompted
+  await authentication.getSession({ id: 'ext2', label: 'Extension 2', removable: true }, 'company.auth-provider', [
+    'scope1',
+    'scope2',
+  ]);
+
+  expect(mb.showMessageBox).toHaveBeenCalledWith(
+    expect.objectContaining({
+      title: 'Allow Access',
+      buttons: ['Deny', 'Allow'],
+    }),
+  );
+});
+
+test('getSession still prompts when removable is undefined', async () => {
+  const mb = {
+    showMessageBox: vi.fn().mockResolvedValue({ response: 1 }),
+  } as unknown as MessageBox;
+  const authentication = new AuthenticationImpl(apiSender, mb);
+  const authProvider = new AuthenticationProviderSingleAccount();
+  authentication.registerAuthenticationProvider('company.auth-provider', 'Provider 1', authProvider);
+
+  const session = await authentication.getSession(
+    { id: 'ext1', label: 'Ext 1' },
+    'company.auth-provider',
+    ['scope1', 'scope2'],
+    { createIfNone: true },
+  );
+
+  expect(session).toBeDefined();
+
+  vi.mocked(mb.showMessageBox).mockClear();
+  vi.mocked(mb.showMessageBox).mockResolvedValue({ response: 1 });
+
+  // Extension without removable field should still be prompted (backward compat)
+  await authentication.getSession({ id: 'ext2', label: 'Extension 2' }, 'company.auth-provider', ['scope1', 'scope2']);
+
+  expect(mb.showMessageBox).toHaveBeenCalledWith(
+    expect.objectContaining({
+      title: 'Allow Access',
+    }),
+  );
+});

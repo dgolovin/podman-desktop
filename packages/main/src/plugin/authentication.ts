@@ -47,6 +47,8 @@ export interface ExtensionInfo {
   id: string;
   label: string;
   icon?: string | { light: string; dark: string };
+  // false for preinstalled/bundled extensions, true for user-installed
+  removable?: boolean;
 }
 
 export interface AllowedExtension {
@@ -324,28 +326,33 @@ export class AuthenticationImpl {
         return undefined;
       }
 
-      // If not yet decided (undefined), ask for permission (unless silent)
+      // If not yet decided (undefined), ask for permission (unless silent or preinstalled)
       if (accessAllowed === undefined) {
-        if (options.silent) {
-          // Cannot prompt in silent mode, return undefined
-          return undefined;
-        }
-
-        const allowRsp = await this.messageBox.showMessageBox({
-          title: 'Allow Access',
-          message: `The extension '${requestingExtension.label}' wants to access the ${providerData?.label ?? providerId} account '${accountLabel}'.`,
-          buttons: ['Deny', 'Allow'],
-          type: 'info',
-        });
-
-        const isAllowed = allowRsp.response === 1;
-
-        // Only store allowance when user allows, not when they deny
-        // This way, denying will prompt again next time instead of permanently blocking
-        if (isAllowed) {
+        if (requestingExtension.removable === false) {
+          // Preinstalled extensions are auto-allowed without user confirmation
           this.updateAllowedExtension(providerId, accountId, requestingExtension.id, requestingExtension.label, true);
         } else {
-          return undefined;
+          if (options.silent) {
+            // Cannot prompt in silent mode, return undefined
+            return undefined;
+          }
+
+          const allowRsp = await this.messageBox.showMessageBox({
+            title: 'Allow Access',
+            message: `The extension '${requestingExtension.label}' wants to access the ${providerData?.label ?? providerId} account '${accountLabel}'.`,
+            buttons: ['Deny', 'Allow'],
+            type: 'info',
+          });
+
+          const isAllowed = allowRsp.response === 1;
+
+          // Only store allowance when user allows, not when they deny
+          // This way, denying will prompt again next time instead of permanently blocking
+          if (isAllowed) {
+            this.updateAllowedExtension(providerId, accountId, requestingExtension.id, requestingExtension.label, true);
+          } else {
+            return undefined;
+          }
         }
       }
 
